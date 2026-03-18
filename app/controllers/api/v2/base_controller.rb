@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Api
+module API
   module V2
     class BaseController < ActionController::Base
       skip_before_action :verify_authenticity_token
