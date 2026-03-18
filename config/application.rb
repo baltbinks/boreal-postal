@@ -46,8 +46,7 @@ module Postal
       config.logger = Logger.new("/dev/null")
     end
 
+    config.hosts = nil
+
   end
 end
-
-    # Allow all hosts for API access
-    config.hosts = nil
