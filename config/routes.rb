@@ -43,8 +43,8 @@ Rails.application.routes.draw do
         get "suppressions", to: "suppressions#index"
         delete "suppressions/:address", to: "suppressions#destroy", constraints: { address: /[^\/]+/ }
         member do
-          post "send_message", path: "send"
-          post "send_raw", path: "send/raw"
+          post :send_message
+          post :send_raw
         end
       end
       resources :ip_pools, only: [:index, :show], param: :uuid do
