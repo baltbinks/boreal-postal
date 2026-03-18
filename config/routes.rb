@@ -22,7 +22,11 @@ Rails.application.routes.draw do
           post :verify_dns, on: :member
           get :dkim_key, on: :member
         end
-        resources :routes, only: [:index, :show, :create, :update, :destroy], param: :uuid
+        resources :routes, only: [:index, :show, :create, :update, :destroy], param: :uuid do
+          get :additional_endpoints, on: :member
+          post :add_endpoint, on: :member
+          delete "endpoints/:additional_id", action: :remove_endpoint, on: :member
+        end
         resources :webhooks, only: [:index, :show, :create, :update, :destroy], param: :uuid do
           get :history, on: :member
         end

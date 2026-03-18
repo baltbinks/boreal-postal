@@ -40,6 +40,45 @@ module Api
         head :no_content
       end
 
+      def add_endpoint
+        route = find_route
+        endpoint_ref = params[:endpoint]
+        return render(json: { error: "endpoint parameter required" }, status: :unprocessable_entity) unless endpoint_ref
+
+        additional = route.additional_route_endpoints.build(_endpoint: endpoint_ref)
+        additional.save!
+        render json: {
+          data: {
+            id: additional.id,
+            endpoint: additional._endpoint,
+            endpoint_type: additional.endpoint_type,
+            endpoint_id: additional.endpoint_id
+          }
+        }, status: :created
+      end
+
+      def remove_endpoint
+        route = find_route
+        additional = route.additional_route_endpoints.find(params[:additional_id])
+        additional.destroy!
+        head :no_content
+      end
+
+      def additional_endpoints
+        route = find_route
+        render json: {
+          data: route.additional_route_endpoints.map { |ae|
+            {
+              id: ae.id,
+              endpoint: ae._endpoint,
+              endpoint_type: ae.endpoint_type,
+              endpoint_id: ae.endpoint_id,
+              created_at: ae.created_at&.iso8601
+            }
+          }
+        }
+      end
+
       private
 
       def find_server
