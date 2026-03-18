@@ -7,6 +7,40 @@ Rails.application.routes.draw do
   match "/api/v1/messages/message" => "legacy_api/messages#message", via: [:get, :post, :patch, :put]
   match "/api/v1/messages/deliveries" => "legacy_api/messages#deliveries", via: [:get, :post, :patch, :put]
 
+  # API v2
+  namespace :api do
+    namespace :v2 do
+      resources :servers, only: [:index, :show, :update], param: :uuid do
+        post :suspend, on: :member
+        post :unsuspend, on: :member
+        get :queue, on: :member
+        get :stats, on: :member
+        resources :credentials, only: [:index, :show, :create, :update, :destroy], param: :uuid
+        resources :domains, only: [:index, :show, :create, :update, :destroy], param: :uuid do
+          post :check_dns, on: :member
+          get :dns_records, on: :member
+        end
+        resources :routes, only: [:index, :show, :create, :update, :destroy], param: :uuid
+        resources :webhooks, only: [:index, :show, :create, :update, :destroy], param: :uuid do
+          get :history, on: :member
+        end
+        resources :messages, only: [:index, :show] do
+          post :retry, on: :member
+          get :deliveries, on: :member
+        end
+        member do
+          post "send_message", path: "send"
+          post "send_raw", path: "send/raw"
+        end
+      end
+      resources :ip_pools, only: [:index, :show], param: :uuid do
+        resources :ip_addresses, only: [:index], param: :uuid
+      end
+      get :health, to: "system#health"
+      get :version, to: "system#version"
+    end
+  end
+
   scope "org/:org_permalink", as: "organization" do
     resources :domains, only: [:index, :new, :create, :destroy] do
       match :verify, on: :member, via: [:get, :post]
