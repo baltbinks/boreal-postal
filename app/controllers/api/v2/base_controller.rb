@@ -2,7 +2,9 @@
 
 module Api
   module V2
-    class BaseController < ActionController::API
+    class BaseController < ActionController::Base
+      skip_before_action :verify_authenticity_token
+      skip_before_action :set_browser_id, raise: false
 
       MAX_PER_PAGE = (ENV["API_MAX_PER_PAGE"] || 200).to_i
 
