@@ -107,6 +107,32 @@ module Api
         render json: { data: records }
       end
 
+      def verify_dns
+        domain = find_domain
+        if domain.verification_method == "DNS"
+          verified = domain.verify_with_dns
+        else
+          verified = domain.mark_as_verified
+        end
+        render json: {
+          data: {
+            verified: verified,
+            verified_at: domain.verified_at&.iso8601
+          }
+        }
+      end
+
+      def dkim_key
+        domain = find_domain
+        render json: {
+          data: {
+            identifier: domain.dkim_identifier,
+            record_name: domain.dkim_record_name,
+            public_key: domain.dkim_record
+          }
+        }
+      end
+
       private
 
       def find_server

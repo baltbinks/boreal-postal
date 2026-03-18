@@ -18,6 +18,12 @@ module Api
         render json: { data: serialize_server(server) }
       end
 
+      def create
+        server = @server.organization.servers.new(server_params)
+        server.save!
+        render json: { data: serialize_server(server) }, status: :created
+      end
+
       def update
         server = find_server
         server.update!(server_params)
@@ -152,10 +158,11 @@ module Api
       end
 
       def server_params
-        params.permit(:name, :mode, :send_limit, :message_retention_days,
+        params.permit(:name, :mode, :ip_pool_id, :send_limit, :message_retention_days,
                        :raw_message_retention_days, :raw_message_retention_size,
                        :outbound_spam_threshold, :spam_threshold, :spam_failure_threshold,
-                       :postmaster_address, :log_smtp_data, :allow_sender, :privacy_mode)
+                       :postmaster_address, :domains_not_to_click_track,
+                       :log_smtp_data, :allow_sender, :privacy_mode)
       end
 
       def serialize_server(server)
@@ -170,6 +177,11 @@ module Api
           message_retention_days: server.message_retention_days,
           raw_message_retention_days: server.raw_message_retention_days,
           raw_message_retention_size: server.raw_message_retention_size,
+          outbound_spam_threshold: server.outbound_spam_threshold&.to_f,
+          spam_threshold: server.spam_threshold&.to_f,
+          spam_failure_threshold: server.spam_failure_threshold&.to_f,
+          postmaster_address: server.postmaster_address,
+          domains_not_to_click_track: server.domains_not_to_click_track,
           allow_sender: server.allow_sender,
           log_smtp_data: server.log_smtp_data,
           privacy_mode: server.privacy_mode,

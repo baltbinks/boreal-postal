@@ -5,7 +5,7 @@ module Api
     class IpPoolsController < BaseController
 
       def index
-        pools = @server.organization.ip_pools
+        pools = @server.organization.ip_pools.includes(:ip_addresses)
         result = paginate(pools.order(:name))
         render json: {
           data: result[:data].map { |p| serialize_ip_pool(p) },
@@ -14,7 +14,7 @@ module Api
       end
 
       def show
-        pool = @server.organization.ip_pools.find_by!(uuid: params[:uuid])
+        pool = @server.organization.ip_pools.includes(:ip_addresses).find_by!(uuid: params[:uuid])
         render json: { data: serialize_ip_pool(pool) }
       end
 
@@ -25,7 +25,7 @@ module Api
           uuid: pool.uuid,
           name: pool.name,
           default: pool.default,
-          ip_addresses_count: pool.ip_addresses.count,
+          ip_addresses_count: pool.ip_addresses.size,
           created_at: pool.created_at&.iso8601,
           updated_at: pool.updated_at&.iso8601
         }

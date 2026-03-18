@@ -10,7 +10,7 @@ Rails.application.routes.draw do
   # API v2
   namespace :api do
     namespace :v2 do
-      resources :servers, only: [:index, :show, :update], param: :uuid do
+      resources :servers, only: [:index, :show, :create, :update], param: :uuid do
         post :suspend, on: :member
         post :unsuspend, on: :member
         get :queue, on: :member
@@ -19,6 +19,8 @@ Rails.application.routes.draw do
         resources :domains, only: [:index, :show, :create, :update, :destroy], param: :uuid do
           post :check_dns, on: :member
           get :dns_records, on: :member
+          post :verify_dns, on: :member
+          get :dkim_key, on: :member
         end
         resources :routes, only: [:index, :show, :create, :update, :destroy], param: :uuid
         resources :webhooks, only: [:index, :show, :create, :update, :destroy], param: :uuid do
@@ -28,6 +30,14 @@ Rails.application.routes.draw do
           post :retry, on: :member
           get :deliveries, on: :member
         end
+        resources :http_endpoints, only: [:index, :show, :create, :update, :destroy], param: :uuid
+        resources :smtp_endpoints, only: [:index, :show, :create, :update, :destroy], param: :uuid
+        resources :address_endpoints, only: [:index, :show, :create, :update, :destroy], param: :uuid
+        resources :track_domains, only: [:index, :show, :create, :update, :destroy], param: :uuid
+        resources :suppressions, only: [:index, :create], param: :email do
+          post :bulk, on: :collection
+          delete "/", action: :destroy, on: :member
+        end
         member do
           post "send_message", path: "send"
           post "send_raw", path: "send/raw"
@@ -35,9 +45,12 @@ Rails.application.routes.draw do
       end
       resources :ip_pools, only: [:index, :show], param: :uuid do
         resources :ip_addresses, only: [:index], param: :uuid
+        resources :rules, controller: "ip_pool_rules", only: [:index, :show, :create, :update, :destroy], param: :uuid
       end
       get :health, to: "system#health"
       get :version, to: "system#version"
+      get :stats, to: "system#stats"
+      post "provision/ready", to: "system#provision_ready"
     end
   end
 

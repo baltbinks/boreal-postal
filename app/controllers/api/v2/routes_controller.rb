@@ -61,6 +61,7 @@ module Api
           domain: route.domain&.name,
           domain_id: route.domain_id,
           endpoint: route._endpoint,
+          endpoint_type: route.endpoint_type,
           mode: route.mode,
           spam_mode: route.spam_mode,
           token: route.token,

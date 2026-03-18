@@ -22,7 +22,7 @@ module Api
         server = find_server
         credential = server.credentials.new(credential_params)
         credential.save!
-        render json: { data: serialize_credential(credential) }, status: :created
+        render json: { data: serialize_credential(credential, show_key: true) }, status: :created
       end
 
       def update
@@ -51,12 +51,18 @@ module Api
         params.permit(:name, :type, :key, :hold)
       end
 
-      def serialize_credential(credential)
+      def mask_key(key)
+        return nil if key.nil?
+
+        "****#{key[-8..]}"
+      end
+
+      def serialize_credential(credential, show_key: false)
         {
           uuid: credential.uuid,
           name: credential.name,
           type: credential.type,
-          key: credential.key,
+          key: show_key ? credential.key : mask_key(credential.key),
           hold: credential.hold,
           last_used_at: credential.last_used_at&.iso8601,
           created_at: credential.created_at&.iso8601,
