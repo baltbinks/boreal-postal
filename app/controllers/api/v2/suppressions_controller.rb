@@ -26,6 +26,9 @@ module Api
           render json: { error: "address is required" }, status: :unprocessable_entity
           return
         end
+        unless params[:address].to_s.include?("@")
+          return render json: { error: "Invalid email address" }, status: :bad_request
+        end
         type = params[:type] || "HardFail"
         server.message_db.suppression_list.add(type, params[:address], reason: params[:reason])
         render json: { data: { address: params[:address], type: type } }, status: :created
@@ -38,6 +41,9 @@ module Api
           render json: { error: "addresses array is required" }, status: :unprocessable_entity
           return
         end
+        addresses = addresses.select { |a| a.to_s.include?("@") }
+        return render(json: { error: "No valid addresses" }, status: :bad_request) if addresses.empty?
+
         type = params[:type] || "HardFail"
         addresses.each do |address|
           server.message_db.suppression_list.add(type, address, reason: params[:reason])
@@ -60,7 +66,7 @@ module Api
       private
 
       def find_server
-        @server.organization.servers.find_by!(uuid: params[:server_uuid])
+        @server.organization.servers.where(deleted_at: nil).find_by!(uuid: params[:server_uuid])
       end
 
       def serialize_suppression(suppression)

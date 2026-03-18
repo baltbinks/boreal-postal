@@ -5,7 +5,7 @@ module Api
     class ServersController < BaseController
 
       def index
-        servers = @server.organization.servers
+        servers = @server.organization.servers.where(deleted_at: nil)
         result = paginate(servers.order(:name))
         render json: {
           data: result[:data].map { |s| serialize_server(s) },
@@ -69,7 +69,14 @@ module Api
         }
       end
 
+      MAX_ATTACHMENTS = 50
+      MAX_ATTACHMENT_SIZE = 25 * 1024 * 1024
+
       def send_message
+        if params[:attachments].is_a?(Array) && params[:attachments].size > MAX_ATTACHMENTS
+          return render json: { error: "Too many attachments (max #{MAX_ATTACHMENTS})" }, status: :bad_request
+        end
+
         attributes = {}
         attributes[:to] = params[:to]
         attributes[:cc] = params[:cc]
@@ -112,6 +119,9 @@ module Api
           return
         end
 
+        rcpt_to_list = Array(params[:rcpt_to]).map(&:to_s).select { |r| r.include?("@") }
+        return render(json: { error: "No valid recipients" }, status: :bad_request) if rcpt_to_list.empty?
+
         if params[:mail_from].blank?
           render json: { error: "mail_from is required" }, status: :unprocessable_entity
           return
@@ -122,8 +132,23 @@ module Api
           return
         end
 
-        raw_message = Base64.decode64(params[:data])
-        mail = Mail.new(raw_message.split("\r\n\r\n", 2).first)
+        begin
+          raw_message = Base64.decode64(params[:data])
+        rescue ArgumentError
+          return render json: { error: "Invalid base64 data" }, status: :bad_request
+        end
+        return render(json: { error: "Empty message data" }, status: :bad_request) if raw_message.blank?
+
+        unless raw_message.include?("\n")
+          return render json: { error: "Invalid message format" }, status: :bad_request
+        end
+
+        begin
+          mail = Mail.new(raw_message.split("\r\n\r\n", 2).first)
+        rescue => e
+          return render json: { error: "Failed to parse message: #{e.message}" }, status: :bad_request
+        end
+
         from_headers = { "from" => mail.from, "sender" => mail.sender }
         authenticated_domain = @server.find_authenticated_domain_from_headers(from_headers)
 
@@ -133,7 +158,7 @@ module Api
         end
 
         result = { message_id: nil, messages: {} }
-        params[:rcpt_to].uniq.each do |rcpt_to|
+        rcpt_to_list.uniq.each do |rcpt_to|
           msg = @server.message_db.new_message
           msg.rcpt_to = rcpt_to
           msg.mail_from = params[:mail_from]
@@ -154,7 +179,7 @@ module Api
       private
 
       def find_server
-        @server.organization.servers.find_by!(uuid: params[:uuid])
+        @server.organization.servers.where(deleted_at: nil).find_by!(uuid: params[:uuid])
       end
 
       def server_params

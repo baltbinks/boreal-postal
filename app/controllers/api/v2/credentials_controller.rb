@@ -40,7 +40,7 @@ module Api
       private
 
       def find_server
-        @server.organization.servers.find_by!(uuid: params[:server_uuid])
+        @server.organization.servers.where(deleted_at: nil).find_by!(uuid: params[:server_uuid])
       end
 
       def find_credential

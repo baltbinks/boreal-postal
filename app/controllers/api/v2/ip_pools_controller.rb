@@ -25,7 +25,7 @@ module Api
           uuid: pool.uuid,
           name: pool.name,
           default: pool.default,
-          ip_addresses_count: pool.ip_addresses.size,
+          ip_addresses_count: pool.ip_addresses.length,
           created_at: pool.created_at&.iso8601,
           updated_at: pool.updated_at&.iso8601
         }

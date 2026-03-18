@@ -15,7 +15,11 @@ module Api
         options[:where][:scope] = params[:scope] if params[:scope]
         options[:where][:tag] = params[:tag] if params[:tag]
 
-        result = server.message_db.messages_with_pagination(page, options.merge(per_page: per_page))
+        begin
+          result = server.message_db.messages_with_pagination(page, options.merge(per_page: per_page))
+        rescue => e
+          return render json: { error: "Message database unavailable: #{e.message}" }, status: :service_unavailable
+        end
 
         render json: {
           data: result[:records].map { |m| serialize_message(m) },
@@ -30,10 +34,16 @@ module Api
 
       def show
         server = find_server
-        message = server.message_db.message(params[:id].to_i)
+        begin
+          message = server.message_db.message(params[:id].to_i)
+        rescue Postal::MessageDB::Message::NotFound
+          return render json: { error: "Message not found" }, status: :not_found
+        rescue => e
+          return render json: { error: "Message database unavailable: #{e.message}" }, status: :service_unavailable
+        end
+        return render(json: { error: "Message not found" }, status: :not_found) if message.nil?
+
         render json: { data: serialize_message_detail(message) }
-      rescue Postal::MessageDB::Message::NotFound
-        render json: { error: "Message not found" }, status: :not_found
       end
 
       def retry
@@ -60,19 +70,24 @@ module Api
 
       def deliveries
         server = find_server
-        message = server.message_db.message(params[:id].to_i)
+        begin
+          message = server.message_db.message(params[:id].to_i)
+        rescue Postal::MessageDB::Message::NotFound
+          return render json: { error: "Message not found" }, status: :not_found
+        rescue => e
+          return render json: { error: "Message database unavailable: #{e.message}" }, status: :service_unavailable
+        end
+        return render(json: { error: "Message not found" }, status: :not_found) if message.nil?
 
         render json: {
           data: message.deliveries.map { |d| serialize_delivery(d) }
         }
-      rescue Postal::MessageDB::Message::NotFound
-        render json: { error: "Message not found" }, status: :not_found
       end
 
       private
 
       def find_server
-        @server.organization.servers.find_by!(uuid: params[:server_uuid])
+        @server.organization.servers.where(deleted_at: nil).find_by!(uuid: params[:server_uuid])
       end
 
       def serialize_message(message)

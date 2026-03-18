@@ -20,6 +20,11 @@ module Api
 
       def create
         server = find_server
+        if params[:domain_id]
+          unless server.domains.exists?(id: params[:domain_id])
+            return render json: { error: "Domain not found on this server" }, status: :not_found
+          end
+        end
         track_domain = server.track_domains.new(track_domain_params)
         track_domain.save!
         render json: { data: serialize_track_domain(track_domain) }, status: :created
@@ -40,7 +45,7 @@ module Api
       private
 
       def find_server
-        @server.organization.servers.find_by!(uuid: params[:server_uuid])
+        @server.organization.servers.where(deleted_at: nil).find_by!(uuid: params[:server_uuid])
       end
 
       def find_track_domain

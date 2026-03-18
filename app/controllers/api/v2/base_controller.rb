@@ -4,6 +4,8 @@ module Api
   module V2
     class BaseController < ActionController::API
 
+      MAX_PER_PAGE = (ENV["API_MAX_PER_PAGE"] || 200).to_i
+
       before_action :authenticate
       rescue_from ActiveRecord::RecordNotFound, with: :not_found
       rescue_from ActiveRecord::RecordInvalid, with: :unprocessable
@@ -13,7 +15,7 @@ module Api
       def authenticate
         key = request.headers["X-Server-API-Key"]
         if key.blank?
-          render json: { error: "Missing API key" }, status: :unauthorized
+          render json: { error: "API key required" }, status: :unauthorized
           return
         end
 
@@ -24,6 +26,16 @@ module Api
         end
 
         @server = @current_credential.server
+        if @server.deleted_at.present?
+          render json: { error: "Server not found" }, status: :not_found
+          return
+        end
+
+        if @server.organization.deleted_at.present?
+          render json: { error: "Organization not found" }, status: :not_found
+          return
+        end
+
         if @server.suspended?
           render json: { error: "Server is suspended" }, status: :forbidden
           return
@@ -34,7 +46,7 @@ module Api
 
       def paginate(scope)
         page = (params[:page] || 1).to_i
-        per_page = [(params[:per_page] || 50).to_i, 200].min
+        per_page = [(params[:per_page] || 50).to_i, MAX_PER_PAGE].min
         per_page = 1 if per_page < 1
         page = 1 if page < 1
         offset = (page - 1) * per_page

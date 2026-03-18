@@ -62,6 +62,8 @@ module Api
         additional = route.additional_route_endpoints.find(params[:additional_id])
         additional.destroy!
         head :no_content
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: "Endpoint not found" }, status: :not_found
       end
 
       def additional_endpoints
@@ -82,7 +84,7 @@ module Api
       private
 
       def find_server
-        @server.organization.servers.find_by!(uuid: params[:server_uuid])
+        @server.organization.servers.where(deleted_at: nil).find_by!(uuid: params[:server_uuid])
       end
 
       def find_route

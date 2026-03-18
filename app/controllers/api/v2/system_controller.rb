@@ -4,7 +4,7 @@ module Api
   module V2
     class SystemController < BaseController
 
-      skip_before_action :authenticate
+      skip_before_action :authenticate, only: [:health, :version, :provision_ready]
 
       def health
         render json: { status: "healthy" }
