@@ -46,7 +46,7 @@ module Postal
       config.logger = Logger.new("/dev/null")
     end
 
-    config.hosts = nil
+    config.host_authorization = { exclude: ->(request) { true } }
 
   end
 end
