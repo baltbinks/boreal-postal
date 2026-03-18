@@ -38,10 +38,10 @@ Rails.application.routes.draw do
         resources :smtp_endpoints, only: [:index, :show, :create, :update, :destroy], param: :uuid
         resources :address_endpoints, only: [:index, :show, :create, :update, :destroy], param: :uuid
         resources :track_domains, only: [:index, :show, :create, :update, :destroy], param: :uuid
-        resources :suppressions, only: [:index, :create], param: :email do
-          post :bulk, on: :collection
-          delete "/", action: :destroy, on: :member
-        end
+        post "suppressions", to: "suppressions#create"
+        post "suppressions/bulk", to: "suppressions#bulk"
+        get "suppressions", to: "suppressions#index"
+        delete "suppressions/:address", to: "suppressions#destroy", constraints: { address: /[^\/]+/ }
         member do
           post "send_message", path: "send"
           post "send_raw", path: "send/raw"

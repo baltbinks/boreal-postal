@@ -53,7 +53,8 @@ module Api
 
       def destroy
         server = find_server
-        email = params[:email]
+        email = params[:address]
+        return render(json: { error: "address required" }, status: :bad_request) if email.blank?
         type = params[:type] || "HardFail"
         removed = server.message_db.suppression_list.remove(type, email)
         if removed

@@ -20,6 +20,7 @@ module Api
 
       def create
         server = find_server
+        validate_domain_ownership!(server)
         route = server.routes.new(route_params)
         route._endpoint = params[:endpoint] if params[:endpoint]
         route.save!
@@ -28,6 +29,8 @@ module Api
 
       def update
         route = find_route
+        server = route.server
+        validate_domain_ownership!(server) if params[:domain_id]
         route.assign_attributes(route_params)
         route._endpoint = params[:endpoint] if params[:endpoint]
         route.save!
@@ -89,6 +92,15 @@ module Api
 
       def find_route
         find_server.routes.find_by!(uuid: params[:uuid])
+      end
+
+      def validate_domain_ownership!(server)
+        return unless params[:domain_id]
+
+        domain = Domain.find_by(id: params[:domain_id])
+        unless domain && (domain.owner == server || domain.owner == server.organization)
+          raise ActiveRecord::RecordNotFound, "Domain not found on this server"
+        end
       end
 
       def route_params
