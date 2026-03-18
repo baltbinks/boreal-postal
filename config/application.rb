@@ -48,3 +48,6 @@ module Postal
 
   end
 end
+
+    # Allow all hosts for API access
+    config.hosts = nil
