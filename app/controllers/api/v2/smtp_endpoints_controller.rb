@@ -2,7 +2,7 @@
 
 module API
   module V2
-    class SmtpEndpointsController < BaseController
+    class SMTPEndpointsController < BaseController
 
       def index
         server = find_server

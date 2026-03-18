@@ -2,7 +2,7 @@
 
 module API
   module V2
-    class HttpEndpointsController < BaseController
+    class HTTPEndpointsController < BaseController
 
       def index
         server = find_server

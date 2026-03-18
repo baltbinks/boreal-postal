@@ -2,7 +2,7 @@
 
 module API
   module V2
-    class IpPoolRulesController < BaseController
+    class IPPoolRulesController < BaseController
 
       def index
         pool = find_pool

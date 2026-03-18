@@ -2,7 +2,7 @@
 
 module API
   module V2
-    class IpAddressesController < BaseController
+    class IPAddressesController < BaseController
 
       def index
         pool = @server.organization.ip_pools.find_by!(uuid: params[:ip_pool_uuid])

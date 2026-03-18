@@ -2,7 +2,7 @@
 
 module API
   module V2
-    class IpPoolsController < BaseController
+    class IPPoolsController < BaseController
 
       def index
         pools = @server.organization.ip_pools.includes(:ip_addresses)
